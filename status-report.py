@@ -8,27 +8,39 @@ import signal
 import socket
 import smtplib
 import sys
+import threading
 
 
 def main ():
     options, to_addresses = parser().parse_args()
     connection = smtplib.SMTP('localhost')
     input_buffer = []
+    reader = threading.Thread(target=reader_thread, args=(input_buffer, ))
+    reader.start()
+    while True:
+        reader.join(60)
+        message = email.mime.text.MIMEText(''.join(input_buffer))
+        message['Subject'] = options.subject
+        message['From'] = options.from_address
+        message['To'] = ', '.join(to_addresses)
+        if options.verbose:
+            print >>sys.stderr, 'sending status report'
+        connection.sendmail(
+            options.from_address,
+            to_addresses,
+            message.as_string(),
+        )
+        if not reader.is_alive():
+            break
+    connection.quit()
+
+
+def reader_thread (input_buffer):
     while True:
         line = sys.stdin.readline()
         if not line:
             break
         input_buffer.append(line)
-    message = email.mime.text.MIMEText(''.join(input_buffer))
-    message['Subject'] = 'status-report'
-    message['From'] = options.from_address
-    message['To'] = ', '.join(to_addresses)
-    connection.sendmail(
-        options.from_address,
-        to_addresses,
-        message.as_string(),
-    )
-    connection.quit()
 
 
 def parser ():
