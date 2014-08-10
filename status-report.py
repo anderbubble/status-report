@@ -13,7 +13,13 @@ import sys
 def main ():
     options, to_addresses = parser().parse_args()
     connection = smtplib.SMTP('localhost')
-    message = email.mime.text.MIMEText(sys.stdin.read())
+    input_buffer = []
+    while True:
+        line = sys.stdin.readline()
+        if not line:
+            break
+        input_buffer.append(line)
+    message = email.mime.text.MIMEText(''.join(input_buffer))
     message['Subject'] = 'status-report'
     message['From'] = options.from_address
     message['To'] = ', '.join(to_addresses)
