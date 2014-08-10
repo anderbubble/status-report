@@ -13,7 +13,7 @@ import threading
 
 def main ():
     options, to_addresses = parser().parse_args()
-    connection = smtplib.SMTP('localhost')
+    connection = smtplib.SMTP(options.smtp_server)
     input_buffer = []
     reader = threading.Thread(target=reader_thread, args=(input_buffer, ))
     reader.start()
@@ -45,7 +45,8 @@ def reader_thread (input_buffer):
 
 def parser ():
     parser = optparse.OptionParser()
-    parser.add_option('--subject')
+    parser.add_option('-S', '--smtp-server')
+    parser.add_option('-s', '--subject')
     parser.add_option('--from-address')
     parser.add_option('-v', '--verbose', action='store_true')
     fqdn = socket.getfqdn()
@@ -54,6 +55,7 @@ def parser ():
             user = getpass.getuser(),
             domain = fqdn,
         ),
+        smtp_server = 'localhost',
         subject = 'status report from {0}'.format(fqdn),
         verbose = False,
     )
